@@ -31,100 +31,100 @@
 
 // Ported to ESP32
 #ifdef ESP32
-#include <esp_wifi.h>
-#include <WiFi.h>
-#include <WiFiClient.h>
+  #include <esp_wifi.h>
+  #include <WiFi.h>
+  #include <WiFiClient.h>
 
-// From v1.1.0
-#include <WiFiMulti.h>
-WiFiMulti wifiMulti;
+  // From v1.1.0
+  #include <WiFiMulti.h>
+  WiFiMulti wifiMulti;
 
-// LittleFS has higher priority than SPIFFS
-#if (defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 2))
-  #define USE_LITTLEFS true
-  #define USE_SPIFFS false
-#elif defined(ARDUINO_ESP32C3_DEV)
-  // For core v1.0.6-, ESP32-C3 only supporting SPIFFS and EEPROM. To use v2.0.0+ for LittleFS
-  #define USE_LITTLEFS false
-  #define USE_SPIFFS true
-#endif
-
-#if USE_LITTLEFS
-  // Use LittleFS
-  #include "FS.h"
-
-  // Check cores/esp32/esp_arduino_version.h and cores/esp32/core_version.h
-  //#if ( ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0) )  //(ESP_ARDUINO_VERSION_MAJOR >= 2)
+  // LittleFS has higher priority than SPIFFS
   #if (defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 2))
-    #if (_WIFIMGR_LOGLEVEL_ > 3)
-      #warning Using ESP32 Core 1.0.6 or 2.0.0+
+    #define USE_LITTLEFS true
+    #define USE_SPIFFS false
+  #elif defined(ARDUINO_ESP32C3_DEV)
+    // For core v1.0.6-, ESP32-C3 only supporting SPIFFS and EEPROM. To use v2.0.0+ for LittleFS
+    #define USE_LITTLEFS false
+    #define USE_SPIFFS true
+  #endif
+
+  #if USE_LITTLEFS
+    // Use LittleFS
+    #include "FS.h"
+
+    // Check cores/esp32/esp_arduino_version.h and cores/esp32/core_version.h
+    //#if ( ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0) )  //(ESP_ARDUINO_VERSION_MAJOR >= 2)
+    #if (defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 2))
+      #if (_WIFIMGR_LOGLEVEL_ > 3)
+        #warning Using ESP32 Core 1.0.6 or 2.0.0+
+      #endif
+
+      // The library has been merged into esp32 core from release 1.0.6
+      #include <LittleFS.h> // https://github.com/espressif/arduino-esp32/tree/master/libraries/LittleFS
+
+      FS *filesystem = &LittleFS;
+      #define FileFS LittleFS
+      #define FS_Name "LittleFS"
+    #else
+      #if (_WIFIMGR_LOGLEVEL_ > 3)
+        #warning Using ESP32 Core 1.0.5-. You must install LITTLEFS library
+      #endif
+
+      // The library has been merged into esp32 core from release 1.0.6
+      #include <LITTLEFS.h> // https://github.com/lorol/LITTLEFS
+
+      FS *filesystem = &LITTLEFS;
+      #define FileFS LITTLEFS
+      #define FS_Name "LittleFS"
     #endif
 
-    // The library has been merged into esp32 core from release 1.0.6
-    #include <LittleFS.h> // https://github.com/espressif/arduino-esp32/tree/master/libraries/LittleFS
+  #elif USE_SPIFFS
+    #include <SPIFFS.h>
+    FS *filesystem = &SPIFFS;
+    #define FileFS SPIFFS
+    #define FS_Name "SPIFFS"
+  #else
+    // Use FFat
+    #include <FFat.h>
+    FS *filesystem = &FFat;
+    #define FileFS FFat
+    #define FS_Name "FFat"
+  #endif
+  //////
 
+  #define LED_BUILTIN 2
+  #define LED_ON HIGH
+  #define LED_OFF LOW
+
+#else
+  #include <ESP8266WiFi.h> //https://github.com/esp8266/Arduino
+  // needed for library
+  #include <DNSServer.h>
+  #include <ESP8266WebServer.h>
+
+  // From v1.1.0
+  #include <ESP8266WiFiMulti.h>
+  ESP8266WiFiMulti wifiMulti;
+
+  #define USE_LITTLEFS true
+
+  #if USE_LITTLEFS
+    #include <LittleFS.h>
     FS *filesystem = &LittleFS;
     #define FileFS LittleFS
     #define FS_Name "LittleFS"
   #else
-    #if (_WIFIMGR_LOGLEVEL_ > 3)
-      #warning Using ESP32 Core 1.0.5-. You must install LITTLEFS library
-    #endif
-
-    // The library has been merged into esp32 core from release 1.0.6
-    #include <LITTLEFS.h> // https://github.com/lorol/LITTLEFS
-
-    FS *filesystem = &LITTLEFS;
-    #define FileFS LITTLEFS
-    #define FS_Name "LittleFS"
+    FS *filesystem = &SPIFFS;
+    #define FileFS SPIFFS
+    #define FS_Name "SPIFFS"
   #endif
+  //////
 
-#elif USE_SPIFFS
-  #include <SPIFFS.h>
-  FS *filesystem = &SPIFFS;
-  #define FileFS SPIFFS
-  #define FS_Name "SPIFFS"
-#else
-  // Use FFat
-  #include <FFat.h>
-  FS *filesystem = &FFat;
-  #define FileFS FFat
-  #define FS_Name "FFat"
-#endif
-//////
+  #define ESP_getChipId() (ESP.getChipId())
 
-#define LED_BUILTIN 2
-#define LED_ON HIGH
-#define LED_OFF LOW
-
-#else
-#include <ESP8266WiFi.h> //https://github.com/esp8266/Arduino
-// needed for library
-#include <DNSServer.h>
-#include <ESP8266WebServer.h>
-
-// From v1.1.0
-#include <ESP8266WiFiMulti.h>
-ESP8266WiFiMulti wifiMulti;
-
-#define USE_LITTLEFS true
-
-#if USE_LITTLEFS
-#include <LittleFS.h>
-FS *filesystem = &LittleFS;
-#define FileFS LittleFS
-#define FS_Name "LittleFS"
-#else
-FS *filesystem = &SPIFFS;
-#define FileFS SPIFFS
-#define FS_Name "SPIFFS"
-#endif
-//////
-
-#define ESP_getChipId() (ESP.getChipId())
-
-#define LED_ON LOW
-#define LED_OFF HIGH
+  #define LED_ON LOW
+  #define LED_OFF HIGH
 #endif
 
 // Pin D2 mapped to pin GPIO2/ADC12 of ESP32, or GPIO2/TXD1 of NodeMCU control on-board LED
