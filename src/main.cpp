@@ -14,7 +14,7 @@
   Licensed under MIT license
  *****************************************************************************************************************************/
 #if !(defined(ESP8266) || defined(ESP32))
-#error This code is intended to run on the ESP8266 or ESP32 platform! Please check your Tools->Board setting.
+  #error This code is intended to run on the ESP8266 or ESP32 platform! Please check your Tools->Board setting.
 #endif
 
 #define ESP_WIFIMANAGER_VERSION_MIN_TARGET "ESP_WiFiManager v1.12.0"
@@ -200,12 +200,12 @@ String AP_PASS;
 // Just use enough to save memory. On ESP8266, can cause blank ConfigPortal screen
 // if using too much memory
 #define USING_AFRICA false
-#define USING_AMERICA true
+#define USING_AMERICA false
 #define USING_ANTARCTICA false
 #define USING_ASIA false
 #define USING_ATLANTIC false
 #define USING_AUSTRALIA false
-#define USING_EUROPE false
+#define USING_EUROPE true
 #define USING_INDIAN false
 #define USING_PACIFIC false
 #define USING_ETC_GMT false
@@ -221,43 +221,43 @@ String AP_PASS;
 
 // Use USE_DHCP_IP == true for dynamic DHCP IP, false to use static IP which you have to change accordingly to your network
 #if (defined(USE_STATIC_IP_CONFIG_IN_CP) && !USE_STATIC_IP_CONFIG_IN_CP)
-// Force DHCP to be true
-#if defined(USE_DHCP_IP)
-#undef USE_DHCP_IP
-#endif
-#define USE_DHCP_IP true
+  // Force DHCP to be true
+  #if defined(USE_DHCP_IP)
+    #undef USE_DHCP_IP
+  #endif
+  #define USE_DHCP_IP true
 #else
-// You can select DHCP or Static IP here
-#define USE_DHCP_IP true
-//#define USE_DHCP_IP     false
+  // You can select DHCP or Static IP here
+  #define USE_DHCP_IP true
+  //#define USE_DHCP_IP     false
 #endif
 
 #if (USE_DHCP_IP)
-// Use DHCP
+  // Use DHCP
 
-#if (_WIFIMGR_LOGLEVEL_ > 3)
-#warning Using DHCP IP
-#endif
+  #if (_WIFIMGR_LOGLEVEL_ > 3)
+    #warning Using DHCP IP
+  #endif
 
-IPAddress stationIP = IPAddress(0, 0, 0, 0);
-IPAddress gatewayIP = IPAddress(192, 168, 2, 1);
-IPAddress netMask = IPAddress(255, 255, 255, 0);
+  IPAddress stationIP = IPAddress(0, 0, 0, 0);
+  IPAddress gatewayIP = IPAddress(192, 168, 2, 1);
+  IPAddress netMask = IPAddress(255, 255, 255, 0);
 
 #else
-// Use static IP
+  // Use static IP
 
-#if (_WIFIMGR_LOGLEVEL_ > 3)
-#warning Using static IP
-#endif
+  #if (_WIFIMGR_LOGLEVEL_ > 3)
+    #warning Using static IP
+  #endif
 
-#ifdef ESP32
-IPAddress stationIP = IPAddress(192, 168, 2, 232);
-#else
-IPAddress stationIP = IPAddress(192, 168, 2, 186);
-#endif
+  #ifdef ESP32
+    IPAddress stationIP = IPAddress(192, 168, 2, 232);
+  #else
+    IPAddress stationIP = IPAddress(192, 168, 2, 186);
+  #endif
 
-IPAddress gatewayIP = IPAddress(192, 168, 2, 1);
-IPAddress netMask = IPAddress(255, 255, 255, 0);
+  IPAddress gatewayIP = IPAddress(192, 168, 2, 1);
+  IPAddress netMask = IPAddress(255, 255, 255, 0);
 #endif
 
 ////////////////////////////////////////////
@@ -358,86 +358,86 @@ void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig)
 
 uint8_t connectMultiWiFi()
 {
-#if ESP32
-// For ESP32, this better be 0 to shorten the connect time.
-// For ESP32-S2/C3, must be > 500
-#if (USING_ESP32_S2 || USING_ESP32_C3)
-#define WIFI_MULTI_1ST_CONNECT_WAITING_MS 500L
-#else
-// For ESP32 core v1.0.6, must be >= 500
-#define WIFI_MULTI_1ST_CONNECT_WAITING_MS 800L
-#endif
-#else
-// For ESP8266, this better be 2200 to enable connect the 1st time
-#define WIFI_MULTI_1ST_CONNECT_WAITING_MS 2200L
-#endif
+  #if ESP32
+    // For ESP32, this better be 0 to shorten the connect time.
+    // For ESP32-S2/C3, must be > 500
+    #if (USING_ESP32_S2 || USING_ESP32_C3)
+      #define WIFI_MULTI_1ST_CONNECT_WAITING_MS 500L
+    #else
+      // For ESP32 core v1.0.6, must be >= 500
+      #define WIFI_MULTI_1ST_CONNECT_WAITING_MS 800L
+    #endif
+  #else
+    // For ESP8266, this better be 2200 to enable connect the 1st time
+    #define WIFI_MULTI_1ST_CONNECT_WAITING_MS 2200L
+  #endif
 
-#define WIFI_MULTI_CONNECT_WAITING_MS 500L
+  #define WIFI_MULTI_CONNECT_WAITING_MS 500L
 
-  uint8_t status;
+    uint8_t status;
 
-  // WiFi.mode(WIFI_STA);
+    // WiFi.mode(WIFI_STA);
 
-  LOGERROR(F("ConnectMultiWiFi with :"));
+    LOGERROR(F("ConnectMultiWiFi with :"));
 
-  if ((Router_SSID != "") && (Router_Pass != ""))
-  {
-    LOGERROR3(F("* Flash-stored Router_SSID = "), Router_SSID, F(", Router_Pass = "), Router_Pass);
-    LOGERROR3(F("* Add SSID = "), Router_SSID, F(", PW = "), Router_Pass);
-    wifiMulti.addAP(Router_SSID.c_str(), Router_Pass.c_str());
-  }
-
-  for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
-  {
-    // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
-    if ((String(WM_config.WiFi_Creds[i].wifi_ssid) != "") && (strlen(WM_config.WiFi_Creds[i].wifi_pw) >= MIN_AP_PASSWORD_SIZE))
+    if ((Router_SSID != "") && (Router_Pass != ""))
     {
-      LOGERROR3(F("* Additional SSID = "), WM_config.WiFi_Creds[i].wifi_ssid, F(", PW = "), WM_config.WiFi_Creds[i].wifi_pw);
+      LOGERROR3(F("* Flash-stored Router_SSID = "), Router_SSID, F(", Router_Pass = "), Router_Pass);
+      LOGERROR3(F("* Add SSID = "), Router_SSID, F(", PW = "), Router_Pass);
+      wifiMulti.addAP(Router_SSID.c_str(), Router_Pass.c_str());
     }
-  }
 
-  LOGERROR(F("Connecting MultiWifi..."));
+    for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
+    {
+      // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
+      if ((String(WM_config.WiFi_Creds[i].wifi_ssid) != "") && (strlen(WM_config.WiFi_Creds[i].wifi_pw) >= MIN_AP_PASSWORD_SIZE))
+      {
+        LOGERROR3(F("* Additional SSID = "), WM_config.WiFi_Creds[i].wifi_ssid, F(", PW = "), WM_config.WiFi_Creds[i].wifi_pw);
+      }
+    }
 
-  // WiFi.mode(WIFI_STA);
+    LOGERROR(F("Connecting MultiWifi..."));
 
-#if !USE_DHCP_IP
-  // New in v1.4.0
-  configWiFi(WM_STA_IPconfig);
-  //////
-#endif
+    // WiFi.mode(WIFI_STA);
 
-  int i = 0;
-  status = wifiMulti.run();
-  delay(WIFI_MULTI_1ST_CONNECT_WAITING_MS);
+  #if !USE_DHCP_IP
+    // New in v1.4.0
+    configWiFi(WM_STA_IPconfig);
+    //////
+  #endif
 
-  while ((i++ < 20) && (status != WL_CONNECTED))
-  {
-    status = WiFi.status();
+    int i = 0;
+    status = wifiMulti.run();
+    delay(WIFI_MULTI_1ST_CONNECT_WAITING_MS);
+
+    while ((i++ < 20) && (status != WL_CONNECTED))
+    {
+      status = WiFi.status();
+
+      if (status == WL_CONNECTED)
+        break;
+      else
+        delay(WIFI_MULTI_CONNECT_WAITING_MS);
+    }
 
     if (status == WL_CONNECTED)
-      break;
+    {
+      LOGERROR1(F("WiFi connected after time: "), i);
+      LOGERROR3(F("SSID:"), WiFi.SSID(), F(",RSSI="), WiFi.RSSI());
+      LOGERROR3(F("Channel:"), WiFi.channel(), F(",IP address:"), WiFi.localIP());
+    }
     else
-      delay(WIFI_MULTI_CONNECT_WAITING_MS);
-  }
+    {
+      LOGERROR(F("WiFi not connected"));
 
-  if (status == WL_CONNECTED)
-  {
-    LOGERROR1(F("WiFi connected after time: "), i);
-    LOGERROR3(F("SSID:"), WiFi.SSID(), F(",RSSI="), WiFi.RSSI());
-    LOGERROR3(F("Channel:"), WiFi.channel(), F(",IP address:"), WiFi.localIP());
-  }
-  else
-  {
-    LOGERROR(F("WiFi not connected"));
+  #if ESP8266
+      ESP.reset();
+  #else
+      ESP.restart();
+  #endif
+    }
 
-#if ESP8266
-    ESP.reset();
-#else
-    ESP.restart();
-#endif
-  }
-
-  return status;
+    return status;
 }
 
 void toggleLED()
